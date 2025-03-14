@@ -202,7 +202,7 @@ async function downloadYouTubeVideo(url, res) {
         fs.ensureDirSync(path.join(__dirname, "downloads"));
 
         // Construct yt-dlp command
-        const command = `yt-dlp -f "best[ext=mp4]" -o "${outputFilePath}" "${url}"`;
+        const command = `yt-dlp -f best "${url}"`;
 
         ////console.log("Executing:", command);
 
