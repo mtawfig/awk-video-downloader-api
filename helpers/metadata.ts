@@ -1,3 +1,7 @@
+import { exec } from "child_process";
+import util from "util";
+
+const execPromise = util.promisify(exec);
 const axios = require("axios");
 const yts = require("yt-search");
 const puppeteer = require("puppeteer");
@@ -9,8 +13,9 @@ puppeteerExtra.use(StealthPlugin());
 /**
  * Fetch metadata for a YouTube video.
  */
-async function getYouTubeMetadata(url: string) {
+export async function getYouTubeMetadata(url: string) {
     try {
+        // Extract video ID from the URL
         const videoIdMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
         if (!videoIdMatch) return { error: "Invalid YouTube URL" };
 
@@ -19,9 +24,10 @@ async function getYouTubeMetadata(url: string) {
 
         if (!results || !results.title) return { error: "Video not found" };
 
+		////console.log(results);
         return {
             title: results.title,
-            duration: results.seconds,
+            duration: results.seconds, // Duration in seconds
             thumbnail: results.thumbnail,
             views: results.views,
         };
@@ -34,18 +40,22 @@ async function getYouTubeMetadata(url: string) {
 /**
  * Fetch metadata for a Facebook video.
  */
-async function getFacebookMetadata(url: string) {
+export async function getFacebookMetadata(url: string) {
     try {
         const browser = await puppeteer.launch({ headless: true });
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: "domcontentloaded" });
 
-        const metadata = await page.evaluate(() => ({
-            title: document.title || "Facebook Video",
-            duration: "Unknown",
-            thumbnail: document.querySelector('meta[property="og:image"]')?.content || "",
-            views: "Unknown",
-        }));
+        // Extract video metadata (modify as needed)
+        const metadata = await page.evaluate(() => {
+			////console.log(document);
+            return {
+                title: document.title || "Facebook Video",
+                duration: "Unknown", // Requires deeper scraping
+                thumbnail: (document.querySelector('meta[property="og:image"]') as HTMLMetaElement)?.content || "",
+                views: "Unknown", // Facebook hides views without login
+            };
+        });
 
         await browser.close();
         return metadata;
@@ -58,9 +68,10 @@ async function getFacebookMetadata(url: string) {
 /**
  * Fetch metadata for a Twitter (X) video.
  */
-async function getTwitterMetadata(url: string) {
+export async function getTwitterMetadata(url: string) {
     try {
         const res = await axios.get(`https://publish.twitter.com/oembed?url=${url}`);
+		//console.log(res);
         return {
             title: res.data.title || res.data.author_name,
             author: res.data.author_name,
@@ -75,11 +86,13 @@ async function getTwitterMetadata(url: string) {
 /**
  * Fetch metadata for a TikTok video.
  */
-async function getTikTokMetadata(url: string) {
+export async function getTikTokMetadata(url: string) {
     try {
+        // Using an unofficial TikTok metadata API
         const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`;
-        const response = await axios.get(apiUrl);
 
+        const response = await axios.get(apiUrl);
+		////console.log(response);
         if (response.data && response.data.data) {
             return {
                 title: response.data.data.title || "TikTok Video",
@@ -99,18 +112,16 @@ async function getTikTokMetadata(url: string) {
 /**
  * Fetch metadata for an Instagram video.
  */
-async function getInstagramMetadata(url: string) {
+export async function getInstagramMetadata(url: string) {
     try {
         if (!url.includes("instagram.com")) {
             return { error: "Invalid Instagram URL" };
         }
 
+        // Construct yt-dlp command to fetch metadata
         const command = `yt-dlp --dump-json "${url}"`;
-        const { exec } = require("child_process");
-        const util = require("util");
-        const execPromise = util.promisify(exec);
-
         const { stdout } = await execPromise(command);
+
         const metadata = JSON.parse(stdout);
 
         return {
@@ -126,10 +137,3 @@ async function getInstagramMetadata(url: string) {
     }
 }
 
-module.exports = {
-    getYouTubeMetadata,
-    getFacebookMetadata,
-    getTwitterMetadata,
-    getTikTokMetadata,
-    getInstagramMetadata,
-};

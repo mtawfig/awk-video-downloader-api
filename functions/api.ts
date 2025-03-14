@@ -1,35 +1,23 @@
+//import express, { Request, Response } from "express";
+
+type MetadataResponse = { 
+  message?: string;
+  error?: string;
+  title?: string;
+  duration?: number | string;
+  thumbnail?: string;
+  views?: number | string;
+  author?: string;
+  uploader?: string;
+};
+
 const express = require("express");
 const serverless = require("serverless-http");
 const cors = require("cors");
-const ytdl = require("ytdl-core");
-const yts = require("yt-search");
-const puppeteer = require("puppeteer");
-const puppeteerExtra = require("puppeteer-extra"); 
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const axios = require("axios");
-const cheerio = require("cheerio");
-const { exec } = require("child_process");
-const path = require("path");
-const fs = require("fs-extra");
-const util = require("util");
-const {
-    getYouTubeMetadata,
-    getFacebookMetadata,
-    getTwitterMetadata,
-    getTikTokMetadata,
-    getInstagramMetadata
-} = require("../helpers/metadata");
-const {
-    downloadYouTubeVideo,
-    downloadFacebookVideo,
-    downloadTwitterVideo,
-    downloadTikTokVideo,
-    downloadInstagramVideo
-} = require("../helpers/download");
 
-puppeteerExtra.use(StealthPlugin());
+import { getYouTubeMetadata, getFacebookMetadata, getTwitterMetadata, getTikTokMetadata, getInstagramMetadata } from "../helpers/metadata";
+import { downloadYouTubeVideo, downloadFacebookVideo, downloadTwitterVideo, downloadTikTokVideo, downloadInstagramVideo } from "../helpers/download";
 
-const execPromise = util.promisify(exec);
 const app = express();
 
 // Apply CORS middleware
@@ -46,7 +34,7 @@ app.use(express.json());
 /**
  * Detects video source based on URL.
  */
-function detectVideoSource(url) {
+function detectVideoSource(url: string) {
     if (!url) return { source: "Unknown", message: "Invalid URL" };
 
     const patterns = {
@@ -69,12 +57,12 @@ function detectVideoSource(url) {
 /**
  * API Endpoint: Detects video source and fetches metadata.
  */
-app.post("/detect", async (req, res) => {
-    const { url } = req.body;
+app.post("/detect", async (url: string, res: any) => {
+    //const { url } = req;
     if (!url) return res.status(400).json({ error: "URL is required" });
 
     const source = detectVideoSource(url);
-    let metadata = { message: "Metadata not available" };
+    let metadata: MetadataResponse = { message: "Metadata not available" };
 
     if (source === "youtube") {
         metadata = await getYouTubeMetadata(url);
@@ -94,8 +82,8 @@ app.post("/detect", async (req, res) => {
 /**
  * API Endpoint: Detects video source and downloads it.
  */
-app.post("/download", async (req, res) => {
-    const { url } = req.body;
+app.post("/download", async (url: string, res: any) => {
+    //const { url } = req;
     if (!url) return res.status(400).json({ error: "URL is required" });
 
     const source = detectVideoSource(url);

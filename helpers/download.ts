@@ -1,3 +1,5 @@
+import express, { Request, Response } from "express";
+
 const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs-extra");
@@ -6,56 +8,100 @@ const util = require("util");
 const execPromise = util.promisify(exec);
 
 /**
- * Download a YouTube video using yt-dlp.
+ * Download YouTube video.
  */
-async function downloadYouTubeVideo(url: string, res: any) {
+export async function downloadYouTubeVideo(url: string, res: Response) {
     try {
+        // Validate the YouTube URL
         if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
             return res.status(400).json({ error: "Invalid YouTube URL" });
         }
 
-        const outputFilePath = path.join(__dirname, "..", "downloads", `video-${Date.now()}.mp4`);
-        fs.ensureDirSync(path.join(__dirname, "..", "downloads"));
+        // Generate a unique filename
+        const outputFilePath = path.join(__dirname, "downloads", `video-${Date.now()}.mp4`);
 
-        const command = `yt-dlp -f best -o "${outputFilePath}" "${url}"`;
-        console.log("Executing:", command);
+        // Ensure the downloads folder exists
+        fs.ensureDirSync(path.join(__dirname, "downloads"));
 
-        exec(command, (error, stdout, stderr) => {
+        // Construct yt-dlp command
+        const command = `yt-dlp -f best "${url}"`;
+
+        ////console.log("Executing:", command);
+
+        // Execute the yt-dlp command
+        exec(command, (error: Error | null, stdout: string, stderr: string) => {
             if (error) {
                 console.error("yt-dlp Error:", error);
                 return res.status(500).json({ error: "Failed to download YouTube video" });
             }
 
-            streamAndDeleteFile(outputFilePath, res);
+            //console.log("Download completed:", stdout, stderr);
+
+            // Set response headers for file download
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Disposition");
+            res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+            res.setHeader("Content-Disposition", `attachment; filename="video.mp4"`);
+            res.setHeader("Content-Type", "video/mp4");
+
+            // Stream the file back to the client
+            const fileStream = fs.createReadStream(outputFilePath);
+            fileStream.pipe(res);
+
+            // Delete the file after sending it
+            fileStream.on("close", () => fs.removeSync(outputFilePath));
         });
     } catch (error) {
         console.error("YouTube Download Error:", error);
         res.status(500).json({ error: "Failed to process YouTube video download" });
     }
+
 }
 
 /**
- * Download a Facebook video using yt-dlp.
+ * Download Facebook video.
  */
-async function downloadFacebookVideo(url: string, res: any) {
+export async function downloadFacebookVideo(url: string, res: Response) {
     try {
         if (!url.includes("facebook.com")) {
             return res.status(400).json({ error: "Invalid Facebook URL" });
         }
 
-        const outputFilePath = path.join(__dirname, "..", "downloads", `facebook-video-${Date.now()}.mp4`);
-        fs.ensureDirSync(path.join(__dirname, "..", "downloads"));
+        // Generate a unique filename
+        const outputFilePath = path.join(__dirname, "downloads", `facebook-video-${Date.now()}.mp4`);
 
+        // Ensure the downloads folder exists
+        fs.ensureDirSync(path.join(__dirname, "downloads"));
+
+        // Construct yt-dlp command
         const command = `yt-dlp -f best -o "${outputFilePath}" "${url}"`;
-        console.log("Executing:", command);
 
-        exec(command, (error, stdout, stderr) => {
+        //console.log("Executing:", command);
+
+        // Execute the yt-dlp command
+        exec(command, (error: Error | null, stdout: string, stderr: string) => {
             if (error) {
                 console.error("yt-dlp Error:", error);
                 return res.status(500).json({ error: "Failed to download Facebook video" });
             }
 
-            streamAndDeleteFile(outputFilePath, res);
+            //console.log("Download completed:", stdout, stderr);
+
+            // Set headers for file download
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Disposition");
+            res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+            res.setHeader("Content-Disposition", `attachment; filename="facebook-video.mp4"`);
+            res.setHeader("Content-Type", "video/mp4");
+
+            // Stream the file back to the client
+            const fileStream = fs.createReadStream(outputFilePath);
+            fileStream.pipe(res);
+
+            // Delete the file after sending it
+            fileStream.on("close", () => fs.removeSync(outputFilePath));
         });
     } catch (error) {
         console.error("Facebook Download Error:", error);
@@ -64,115 +110,146 @@ async function downloadFacebookVideo(url: string, res: any) {
 }
 
 /**
- * Download a Twitter video using yt-dlp.
+ * Download Twitter video.
  */
-async function downloadTwitterVideo(url: string, res: any) {
+export async function downloadTwitterVideo(url: string, res: Response) {
     try {
         if (!url.includes("twitter.com") && !url.includes("x.com")) {
             return res.status(400).json({ error: "Invalid Twitter URL" });
         }
 
-        const outputFilePath = path.join(__dirname, "..", "downloads", `twitter-video-${Date.now()}.mp4`);
-        fs.ensureDirSync(path.join(__dirname, "..", "downloads"));
+        // Generate a unique filename
+        const outputFilePath = path.join(__dirname, "downloads", `twitter-video-${Date.now()}.mp4`);
 
+        // Ensure the downloads folder exists
+        fs.ensureDirSync(path.join(__dirname, "downloads"));
+
+        // Construct yt-dlp command
         const command = `yt-dlp -f best -o "${outputFilePath}" "${url}"`;
-        console.log("Executing:", command);
 
-        exec(command, (error, stdout, stderr) => {
+        //console.log("Executing:", command);
+
+        // Execute the yt-dlp command
+        exec(command, (error: Error | null, stdout: string, stderr: string) => {
             if (error) {
                 console.error("yt-dlp Error:", error);
                 return res.status(500).json({ error: "Failed to download Twitter video" });
             }
 
-            streamAndDeleteFile(outputFilePath, res);
+            //console.log("Download completed:", stdout, stderr);
+
+            // Set headers for file download
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Disposition");
+            res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+            res.setHeader("Content-Disposition", `attachment; filename="twitter-video.mp4"`);
+            res.setHeader("Content-Type", "video/mp4");
+
+            // Stream the file back to the client
+            const fileStream = fs.createReadStream(outputFilePath);
+            fileStream.pipe(res);
+
+            // Delete the file after sending it
+            fileStream.on("close", () => fs.removeSync(outputFilePath));
         });
     } catch (error) {
-        console.error("Twitter Download Error:", error);
-        res.status(500).json({ error: "Failed to process Twitter video download" });
+        console.error("Error fetching Twitter video:", error);
+        res.status(500).json({ error: "Failed to download Twitter video" });
     }
 }
 
 /**
- * Download a TikTok video using yt-dlp.
+ * Download TikTok video.
  */
-async function downloadTikTokVideo(url: string, res: any) {
+export async function downloadTikTokVideo(url: string, res: Response) {
     try {
         if (!url.includes("tiktok.com")) {
             return res.status(400).json({ error: "Invalid TikTok URL" });
         }
 
-        const outputFilePath = path.join(__dirname, "..", "downloads", `tiktok-video-${Date.now()}.mp4`);
-        fs.ensureDirSync(path.join(__dirname, "..", "downloads"));
+        // Generate a unique filename
+        const outputFilePath = path.join(__dirname, "downloads", `tiktok-video-${Date.now()}.mp4`);
 
+        // Ensure the downloads folder exists
+        fs.ensureDirSync(path.join(__dirname, "downloads"));
+
+        // Construct yt-dlp command
         const command = `yt-dlp -f best -o "${outputFilePath}" "${url}"`;
-        console.log("Executing:", command);
 
-        exec(command, (error, stdout, stderr) => {
+        //console.log("Executing:", command);
+
+        // Execute the yt-dlp command
+        exec(command, (error: Error | null, stdout: string, stderr: string) => {
             if (error) {
                 console.error("yt-dlp Error:", error);
                 return res.status(500).json({ error: "Failed to download TikTok video" });
             }
 
-            streamAndDeleteFile(outputFilePath, res);
+            //console.log("Download completed:", stdout, stderr);
+
+            // Set headers for file download
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Disposition");
+            res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+            res.setHeader("Content-Disposition", `attachment; filename="tiktok-video.mp4"`);
+            res.setHeader("Content-Type", "video/mp4");
+
+            // Stream the file back to the client
+            const fileStream = fs.createReadStream(outputFilePath);
+            fileStream.pipe(res);
+
+            // Delete the file after sending it
+            fileStream.on("close", () => fs.removeSync(outputFilePath));
         });
     } catch (error) {
-        console.error("TikTok Download Error:", error);
-        res.status(500).json({ error: "Failed to process TikTok video download" });
+        res.status(500).json({ error: "Failed to download TikTok video" });
     }
 }
 
 /**
- * Download an Instagram video using yt-dlp.
+ * Download Instagram Video
  */
-async function downloadInstagramVideo(url: string, res: any) {
+export async function downloadInstagramVideo(url: string, res: Response) {
     try {
-        if (!url.includes("instagram.com")) {
-            return res.status(400).json({ error: "Invalid Instagram URL" });
+        if (!url.includes("instagram.com/reel/")) {
+            return res.status(400).json({ error: "Invalid Instagram Reels URL" });
         }
 
-        const outputFilePath = path.join(__dirname, "..", "downloads", `instagram-video-${Date.now()}.mp4`);
-        fs.ensureDirSync(path.join(__dirname, "..", "downloads"));
+        // Generate a unique filename
+        const outputFilePath = path.join(__dirname, "downloads", `instagram-reel-${Date.now()}.mp4`);
 
+        // Ensure the downloads folder exists
+        fs.ensureDirSync(path.join(__dirname, "downloads"));
+
+        // Construct yt-dlp command
         const command = `yt-dlp -f best -o "${outputFilePath}" "${url}"`;
-        console.log("Executing:", command);
 
-        exec(command, (error, stdout, stderr) => {
+        // Execute the yt-dlp command
+        exec(command, (error: Error | null, stdout: string, stderr: string) => {
             if (error) {
                 console.error("yt-dlp Error:", error);
-                return res.status(500).json({ error: "Failed to download Instagram video" });
+                return res.status(500).json({ error: "Failed to download Instagram Reel" });
             }
 
-            streamAndDeleteFile(outputFilePath, res);
+            // Set headers for file download
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Disposition");
+            res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+            res.setHeader("Content-Disposition", `attachment; filename="instagram-reel.mp4"`);
+            res.setHeader("Content-Type", "video/mp4");
+
+            // Stream the file back to the client
+            const fileStream = fs.createReadStream(outputFilePath);
+            fileStream.pipe(res);
+
+            // Delete the file after sending it
+            fileStream.on("close", () => fs.removeSync(outputFilePath));
         });
     } catch (error) {
-        console.error("Instagram Download Error:", error);
-        res.status(500).json({ error: "Failed to process Instagram video download" });
+        console.error("Instagram Reels Download Error:", error);
+        res.status(500).json({ error: "Failed to process Instagram Reels download" });
     }
 }
-
-/**
- * Stream the downloaded file to the client and delete it after sending.
- */
-function streamAndDeleteFile(filePath: string, res: any) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Disposition");
-    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
-    res.setHeader("Content-Disposition", `attachment; filename="${path.basename(filePath)}"`);
-    res.setHeader("Content-Type", "video/mp4");
-
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-
-    fileStream.on("close", () => {
-        fs.removeSync(filePath);
-    });
-}
-
-module.exports = {
-    downloadYouTubeVideo,
-    downloadFacebookVideo,
-    downloadTwitterVideo,
-    downloadTikTokVideo,
-    downloadInstagramVideo
-};
